@@ -1,0 +1,474 @@
+{% load static %}
+{% load math_extras %}
+{% load wind_extra %}
+{% load plotly_dash %}
+
+<!DOCTYPE html>
+<div lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>Weather Dashboard {{ location }}</title>
+
+        <!-- Custom fonts for this template-->
+        <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+              rel="stylesheet">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+        <!-- Custom styles for this template-->
+        <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <style>
+            .text-btn, a:hover {
+                text-decoration: none;
+            }
+
+            .description-text {
+                color: red;
+            }
+        </style>
+    </head>
+
+    <body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        {% include "./includes/sidebar.html" %}
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <!-- Main Content -->
+      <div id="content">
+
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+              <br>
+
+              <!-- Page Heading -->
+              <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                  <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+                  <a href="/dashboard/download" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                          class="fas fa-download fa-sm text-white-50"></i> Download Data</a>
+
+              </div>
+              <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                  <h5>Recent Data</h5>
+              </div>
+
+
+              <!-- Content Row -->
+              <div class="row">
+
+                  <!-- Wind Direction Card -->
+                  {% if sensors.windDirection %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-info shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button type="button" onclick="toggle_visibility('windDirection-chart-area')"
+                                          class="text-btn d-none d-sm-inline-block btn-sm">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Wind
+                                                  Direction <br><span
+                                                          class="duration">({{ config.dashboard.quickLook.periods.windDirection }} mins ago)</span>
+                                              </div>
+                                              <div class="h5 mb-0 font-weight-bold text-gray-800">{% dir degree=weather.quickLookWind.direction %} </div>
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  {% endif %}
+
+                  <!-- Wind Average Speed Card -->
+                  {% if sensors.windSpeed %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-primary shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button class="text-btn d-none d-sm-inline-block btn-sm"
+                                          onclick="toggle_visibility('avgWindSpeed-chart-area')">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                  Avg. Wind
+                                                  Speed <br><span
+                                                      class="duration">({{ config.dashboard.quickLook.periods.avgWindSpeed }} mins ago)</span>
+                                              </div>
+
+                                              <div class="h5 mb-0 font-weight-bold text-gray-800">{% round value=weather.quickLookWind.speed arg=1 key="speed" %} {{ units.speed }}</div>
+
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  {% endif %}
+
+                  <!-- Highest Wind gust Card -->
+                  {% if sensors.windSpeed %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-warning shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button class="text-btn d-none d-sm-inline-block btn-sm"
+                                          onclick="toggle_visibility('windGust-chart-area')">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                  Wind Gust
+                                                  <br><span
+                                                      class="duration">({{ config.dashboard.quickLook.periods.windGust }} mins ago)</span>
+                                              </div>
+                                              <div class="h5 mb-0 font-weight-bold text-gray-800">{% round value=weather.quickLookWind.gust arg=1 key="gust" %} {{ units.speed }}</div>
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  {% endif %}
+
+                  <!-- Recent Rainfall Card -->
+                  {% if sensors.rainfall %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-warning shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button class="text-btn d-none d-sm-inline-block btn-sm"
+                                          onclick="toggle_visibility('rainfall-chart-area')">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                  Rainfall
+                                                  <br><span
+                                                      class="duration">({{ config.dashboard.quickLook.periods.rainfall }} mins ago)</span>
+                                              </div>
+                                              <div class="h5 mb-0 font-weight-bold text-gray-800">{% round value=weather.quickLookRainfall arg=1 key="rainfall" %} {{ units.rainfall }}</div>
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  {% endif %}
+
+                  <!-- Humidity Card -->
+                  {% if sensors.humidity %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-info shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button class="text-btn d-none d-sm-inline-block btn-sm"
+                                          onclick="toggle_visibility('humidity-chart-area')">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                  Humidity <br><span
+                                                      class="duration">({{ config.dashboard.quickLook.periods.humidity }} mins ago)</span>
+                                              </div>
+                                              <div class="row no-gutters align-items-center">
+                                                  <div class="col-auto">
+
+                                                      <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{% round value=weather.quickLookHumidity arg=1 %}%</div>
+
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  {% endif %}
+
+                  <!-- Temp Card -->
+                  {% if sensors.ambientTemp %}
+                      <div class="col-xl-2 col-md-6 mb-4">
+                          <div class="card border-left-info shadow h-100 py-2">
+                              <div class="card-body">
+                                  <button type="button" onclick="toggle_visibility('ambient-chart-area')"
+                                          class="text-btn d-none d-sm-inline-block btn-sm">
+                                      <div class="row no-gutters align-items-center">
+                                          <div class="col mr-2">
+                                              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                  Ambient Temp
+                                                  <br><span
+                                                      class="duration">({{ config.dashboard.quickLook.periods.ambientTemp }} mins ago)</span>
+                                              </div>
+                                              <div class="row no-gutters align-items-center">
+                                                  <div class="col-auto">
+
+                                                      <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{% round value=weather.quickLookAmbient arg=1 %}&#176;{{ units.temp }}</div>
+
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                      </div>
+                  {% endif %}
+
+              <!-- windDirection Chart -->
+              {% if sensors.windDirection %}
+                  <div class="row" id="windDirection-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Wind Direction</h6>
+                              </div>
+                              <div class="card-body" style="">
+                                  {% plotly_app_bootstrap name="windDirection" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="windDirection-chart-area"></div>
+              {% endif %}
+
+              <!-- avgWindSpeed Chart -->
+              {% if sensors.windSpeed %}
+                  <div class="row" id="avgWindSpeed-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Average Wind Speed</h6>
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body">
+                                  {% plotly_app_bootstrap name="windSpeed" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="avgWindSpeed-chart-uno"></div>
+              {% endif %}
+
+              <!-- windGust Chart -->
+              {% if sensors.windSpeed %}
+                  <div class="row" id="windGust-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Wind Gust</h6>
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body">
+                                  {% plotly_app_bootstrap name="windGust" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="windGust-chart-area"></div>
+              {% endif %}
+
+              <!-- rainfall Chart -->
+              {% if sensors.rainfall %}
+                  <div class="row" id="rainfall-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Rainfall</h6>
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body">
+                                  {% plotly_app_bootstrap name="rainfall" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="rainfall-chart-area"></div>
+              {% endif %}
+              <!-- humidity Chart -->
+              {% if sensors.humidity %}
+                  <div class="row" id="humidity-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Humidity</h6>
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body">
+                                  {% plotly_app_bootstrap name="humidity" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="humidity-chart-area"></div>
+              {% endif %}
+
+              <!-- ambientTemp Chart -->
+              {% if sensors.ambientTemp %}
+                  <div class="row" id="ambient-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                  <h6 class="m-0 font-weight-bold text-primary">Ambient Temperature</h6>
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body description-text">
+                                  {% plotly_app_bootstrap name="ambientTemp" aspect="21by9" %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% else %}
+                  <div class="row" id="ambient-chart-area">
+                      <div class="col-xl-12 col-lg-auto mb-4">
+                          <div class="card shadow mb-4">
+                              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                              </div>
+                              <!-- Card Body -->
+                              <div class="card-body description-text">
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              {% endif %}
+
+              <!-- Content Row -->
+              <div class="row">
+
+                  <!-- Content Column -->
+                  <div class="col-lg-6 mb-4">
+
+                      <div class="col-lg-6 mb-4">
+
+                      </div>
+
+
+        </div>
+        <!-- /.container-fluid -->
+
+      </div>
+      <!-- End of Main Content -->
+
+
+
+    </div>
+      {% include "./includes/footer.html" %}
+    <!-- End of Content Wrapper -->
+
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Scroll to Top Button-->
+  <a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+  </a>
+
+  <!-- Logout Modal-->
+  <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+          <a class="btn btn-primary" href="login.html">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap core JavaScript
+  <script src="{ % static 'vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{ % static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>-->
+
+  <!-- Core plugin JavaScript-->
+  <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+
+  <!-- Custom scripts for all pages-->
+  <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+      <script src="{% static 'js/graph-button.js' %}"></script>
+        <script type="text/javascript">
+            function toggle_visibility(id) {
+            const idList = ['windDirection-chart-area', 'avgWindSpeed-chart-area', 'windGust-chart-area', 'rainfall-chart-area', 'humidity-chart-area', 'ambient-chart-area'];
+            for (x of idList) {
+                const doc = document.getElementById(x);
+                const style = getComputedStyle(doc);
+                if (style.display === 'flex' && x !== id) {
+                    doc.style.display = 'none';
+                }
+            }
+            const doc = document.getElementById(id);
+            const style = getComputedStyle(doc);
+            if (style.display === 'none') {
+            doc.style.display = 'flex';
+        } else {
+                doc.style.display = 'none';
+            }
+            }
+            
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+
+            const keys = urlParams.keys();
+
+            const idList = ['windDirection-chart-area', 'avgWindSpeed-chart-area', 'windGust-chart-area', 'rainfall-chart-area', 'humidity-chart-area'];
+            const idListExtra = ['windDirection-chart-area', 'avgWindSpeed-chart-area', 'windGust-chart-area', 'rainfall-chart-area', 'humidity-chart-area', 'ambient-chart-area'];
+
+            const requestParams = {windDir: 'windDirection-chart-area',
+                                    avgWindSpeed: 'avgWindSpeed-chart-area',
+                                    windGust: 'windGust-chart-area',
+                                    rainfall: 'rainfall-chart-area',
+                                    humidity: 'humidity-chart-area'}
+
+            if (keys.length === undefined) {
+                for (x of idList){
+                    const doc = document.getElementById(x);
+                    doc.style.display= 'none';
+                    console.log(x);
+                }
+            } else {
+                for (x of idListExtra){
+                            const doc = document.getElementById(x);
+                            doc.style.display= 'none';
+                            console.log('problem')
+                       }
+                for (const key of keys) {
+                    console.log('loop', key, requestParams[key]);
+                    const doc = document.getElementById(requestParams[key]);
+                    doc.style.display = 'flex';
+
+                    }
+                }
+
+        </script>
+  <!-- Page level plugins -->
+  <!--script src="{ % static 'vendor/chart.js/Chart.min.js' %}"></script>--->
+
+  <!-- Page level custom scripts
+  <script src="{ % static 'js/demo/chart-area-demo.js' %}"></script>
+  <script src="{ % static 'js/demo/chart-pie-demo.js' %}"></script>
+  <script src="{ % static 'js/charts/windSpeed.js' %}"></script> -->
+
+</div>
+</body>
+
+
+</html>
+</div>
